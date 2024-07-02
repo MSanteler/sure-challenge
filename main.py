@@ -22,7 +22,9 @@ def main(dry_run=True, num_prefixes_to_keep=2, bucket_name=''):
     # Slice to keep the n most recent prefixes
     prefixes_to_delete = prefixes[num_prefixes_to_keep:]
 
-    # TODO: Additional filtering by date arg
+    # TODO: Additional filtering by date arg e.g.
+    # filter_date = datetime(2024, 6, 30)
+    # prefixes_to_delete = [prefix for prefix in prefixes_to_delete if prefix[1] < filter_date]
 
     # Delete the remaining prefixes
     for prefix in prefixes_to_delete:
