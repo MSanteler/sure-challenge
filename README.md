@@ -10,7 +10,7 @@
   ```
 * Run the script
   ```
-  python ./main.py
+  python ./main.py --bucket-name sure-deploys -n 2 --dry-run
   ```
 
 # Original Prompt:

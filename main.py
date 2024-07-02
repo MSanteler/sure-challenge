@@ -1,3 +1,4 @@
+import argparse
 import boto3
 from botocore.exceptions import ClientError
 
@@ -55,4 +56,10 @@ def main(dry_run=True, num_prefixes_to_keep=2, bucket_name=''):
     print('Cleanup complete')
 
 if __name__ == "__main__":
-    main(dry_run=True, num_prefixes_to_keep=1, bucket_name='sure-deploys')
+    parser = argparse.ArgumentParser(description='Clean up old S3 prefixes (deploys).')
+    parser.add_argument('-n', '--num-prefixes-to-keep', type=int, default=3, help='Number of most recent prefixes to keep')
+    parser.add_argument('-d', '--dry-run', action='store_true', help='Perform a dry run without deleting anything')
+    parser.add_argument('-b', '--bucket-name', type=str, required=True, help='The name of the S3 bucket')
+
+    args = parser.parse_args()
+    main(args.dry_run, args.num_prefixes_to_keep, args.bucket_name)
