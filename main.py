@@ -16,7 +16,14 @@ def get_prefix_metadata(bucket_name, prefix_name):
         print(f"Error fetching s3 metadata for {prefix_name}: {e}")
         exit(1)
 
+def positive_nonzero_int(value):
+    ivalue = int(value)
+    if ivalue <= 0:
+        raise argparse.ArgumentTypeError(f"{value} is invalid. Must be a positive non-zero integer value")
+    return ivalue
+
 def main(dry_run=True, num_prefixes_to_keep=2, bucket_name=''):
+    num_prefixes_to_keep = positive_nonzero_int(num_prefixes_to_keep) # Redundant validation in case main is somehow invoked outside of the cli
     # Get the list of prefixes in the root of the bucket
     try:
         response = s3.list_objects_v2(Bucket=bucket_name, Delimiter='/')
@@ -57,7 +64,7 @@ def main(dry_run=True, num_prefixes_to_keep=2, bucket_name=''):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Clean up old S3 prefixes (deploys).')
-    parser.add_argument('-n', '--num-prefixes-to-keep', type=int, default=3, help='Number of most recent prefixes to keep')
+    parser.add_argument('-n', '--num-prefixes-to-keep', type=positive_nonzero_int, default=3, help='Number of recent prefixes to keep (must be a positive non-zero integer)')
     parser.add_argument('-d', '--dry-run', action='store_true', help='Perform a dry run without deleting anything')
     parser.add_argument('-b', '--bucket-name', type=str, required=True, help='The name of the S3 bucket')
 
