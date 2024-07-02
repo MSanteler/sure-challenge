@@ -1,6 +1,6 @@
 # Sure Infrastructure Scripting Challenge
 
-* This script uses boto3 and assumes that the host has set AWS credentials via env vars
+* This script uses boto3 and assumes that the host has set AWS credentials via a [supported configuration](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html)
 * Create a test bucket and populate with local sample-data
   ```
   aws s3api create-bucket --bucket sure-deploys --region us-east-1
