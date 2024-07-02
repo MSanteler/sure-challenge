@@ -1,20 +1,35 @@
 import boto3
+from botocore.exceptions import ClientError
 
 # Initialize a session using Amazon S3
 s3 = boto3.client('s3')
 
+def get_prefix_metadata(bucket_name, prefix_name):
+    try:
+        prefix_response = s3.list_objects_v2(Bucket=bucket_name, Prefix=prefix_name)
+        if 'Contents' in prefix_response:
+            return (prefix_name, prefix_response['Contents'][0]['LastModified'], prefix_response['Contents'][0]['Key'])
+        print(f"Error missing metadata {prefix_name}: {e}")
+        exit(1)
+    except ClientError as e:
+        print(f"Error fetching s3 metadata for {prefix_name}: {e}")
+        exit(1)
+
 def main(dry_run=True, num_prefixes_to_keep=2, bucket_name=''):
     # Get the list of prefixes in the root of the bucket
-    response = s3.list_objects_v2(Bucket=bucket_name, Delimiter='/')
+    try:
+        response = s3.list_objects_v2(Bucket=bucket_name, Delimiter='/')
+    except ClientError as e:
+        print(f"Error fetching s3 data for {bucket_name}: {e}")
+        exit(1)
 
     prefixes = []
     if 'CommonPrefixes' in response:
         for prefix in response['CommonPrefixes']:
             prefix_name = prefix['Prefix']
-            prefix_response = s3.list_objects_v2(Bucket=bucket_name, Prefix=prefix_name) # Need an explicit second call for metadata such as last_modified
-            last_modified_date = prefix_response['Contents'][0]['LastModified']
-            key = prefix_response['Contents'][0]['Key']
-            prefixes.append((prefix_name, last_modified_date, key))
+            prefix_metadata = get_prefix_metadata(bucket_name, prefix_name)
+            if prefix_metadata:
+                prefixes.append(prefix_metadata)
 
     # Sort prefixes by last modified date (newest first)
     prefixes.sort(key=lambda x: x[1], reverse=True)
@@ -26,13 +41,16 @@ def main(dry_run=True, num_prefixes_to_keep=2, bucket_name=''):
     # filter_date = datetime(2024, 6, 30)
     # prefixes_to_delete = [prefix for prefix in prefixes_to_delete if prefix[1] < filter_date]
 
-    # Delete the remaining prefixes
+    # Delete the remaining prefixes by key
     for prefix in prefixes_to_delete:
         if dry_run:
             print(f"DRY RUN: Would delete prefix: {prefix[0]}")
         else:
             print(f"Deleting: {prefix[0]}")
-            s3.delete_object(Bucket=bucket_name, Key=prefix[2])
+            try:
+                s3.delete_object(Bucket=bucket_name, Key=prefix[2])
+            except ClientError as e:
+                print(f"Error deleting from key: {prefix[2]} from {bucket_name}: {e}")
 
     print('Cleanup complete')
 
